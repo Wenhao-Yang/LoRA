@@ -250,18 +250,30 @@ class ConvLoRA(nn.Module, LoRALayer):
         for name, param in self.conv.named_parameters():
             self.register_parameter(name, param)
         LoRALayer.__init__(self, r=r, lora_alpha=lora_alpha, lora_dropout=lora_dropout, merge_weights=merge_weights)
-        assert isinstance(kernel_size, int)
+
+        # assert isinstance(kernel_size, int)
+        if len(kernel_size) == 1:
+            kernel_size_A = kernel_size[0]
+            kernel_size_B = 1
+        elif len(kernel_size) == 2:
+            kernel_size_A = kernel_size[0]
+            kernel_size_B = kernel_size[1]
+        elif len(kernel_size) == 3:
+            kernel_size_A = kernel_size[0] * kernel_size[1]
+            kernel_size_B = kernel_size[2]
+        
         # Actual trainable parameters
         if r > 0:
             self.lora_A = nn.Parameter(
-                self.conv.weight.new_zeros((r * kernel_size, in_channels * kernel_size))
+                self.conv.weight.new_zeros((r * kernel_size_A, in_channels * kernel_size_A))
             )
             self.lora_B = nn.Parameter(
-              self.conv.weight.new_zeros((out_channels//self.conv.groups*kernel_size, r*kernel_size))
+              self.conv.weight.new_zeros((out_channels//self.conv.groups*kernel_size_B, r*kernel_size_A))
             )
             self.scaling = self.lora_alpha / self.r
             # Freezing the pre-trained weight matrix
             self.conv.weight.requires_grad = False
+
         self.reset_parameters()
         self.merged = False
 
