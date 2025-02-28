@@ -112,6 +112,7 @@ class Linear(nn.Linear, LoRALayer):
             self.scaling = self.lora_alpha / self.r
             # Freezing the pre-trained weight matrix
             self.weight.requires_grad = False
+            
         self.reset_parameters()
         if fan_in_fan_out:
             self.weight.data = self.weight.data.transpose(0, 1)
